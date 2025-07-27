@@ -29,7 +29,9 @@ const getFolder = asyncHandler(async (req, res) => {
 //     const value = await validationSchema.idSchema.validateAsync(req.params)
 //     const folderId = value.id
 
+//     const {userId} = req.user
 
+//     const [rows]
 // })
 
 const deleteFolder = asyncHandler(async (req, res) => {

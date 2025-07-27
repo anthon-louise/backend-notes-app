@@ -4,12 +4,12 @@ const pool = require('../config/db')
 
 const createNote = asyncHandler(async (req, res) => {
     const bodyValue = await validationSchema.noteSchema.validateAsync(req.body)
-    const {title, content} = bodyValue
+    const { title, content } = bodyValue
 
     const idValue = await validationSchema.idSchema.validateAsync(req.params)
     const folderId = idValue.id
 
-    const {userId} = req.user
+    const { userId } = req.user
 
     const [rows] = await pool.query(`
         SELECT * FROM folders WHERE id=? AND user_id=?
@@ -19,16 +19,16 @@ const createNote = asyncHandler(async (req, res) => {
         err.status = 404
         throw err
     }
-    
+
     const [result] = await pool.query(`
         INSERT INTO notes (title, content, folder_id, user_id) VALUES (?, ?, ?, ?)
         `, [title, content, folderId, userId])
-    
-        res.json({message: 'Notes created'})
+
+    res.json({ message: 'Notes created' })
 })
 
 const getNotes = asyncHandler(async (req, res) => {
-    const {userId} = req.user
+    const { userId } = req.user
 
     const [rows] = await pool.query(`
         SELECT * FROM notes WHERE user_id=?
@@ -41,7 +41,7 @@ const getNoteById = asyncHandler(async (req, res) => {
     const value = await validationSchema.idSchema.validateAsync(req.params)
     const noteId = value.id
 
-    const {userId} = req.user
+    const { userId } = req.user
 
     const [rows] = await pool.query(`
         SELECT * FROM notes WHERE id=? AND user_id=? 
@@ -55,8 +55,57 @@ const getNoteById = asyncHandler(async (req, res) => {
     res.json(rows)
 })
 
+const deleteNote = asyncHandler(async (req, res) => {
+    const value = await validationSchema.idSchema.validateAsync(req.params)
+    const noteId = value.id
+
+    const { userId } = req.user
+
+    const [rows] = await pool.query(`
+        SELECT * FROM notes WHERE id=? AND user_id=? 
+        `, [noteId, userId])
+    if (rows.length === 0) {
+        const err = new Error('Note not found')
+        err.status = 404
+        throw err
+    }
+
+    await pool.query(`
+        DELETE FROM notes WHERE id=? AND user_id=?
+        `, [noteId, userId])
+
+    res.json({ message: 'Deleted Successfully' })
+})
+
+const updateNote = asyncHandler(async (req, res) => {
+    const bodyValue = await validationSchema.noteSchema.validateAsync(req.body)
+    const {title, content} = bodyValue
+
+    const idValue = await validationSchema.idSchema.validateAsync(req.params)
+    const noteId = idValue.id
+
+    const { userId } = req.user
+
+    const [rows] = await pool.query(`
+        SELECT * FROM notes WHERE id=? AND user_id=? 
+        `, [noteId, userId])
+    if (rows.length === 0) {
+        const err = new Error('Note not found')
+        err.status = 404
+        throw err
+    }
+
+    await pool.query(`
+        UPDATE notes SET title=?, content=? WHERE id=? AND user_id=?
+        `, [title, content, noteId, userId])
+
+    res.json({message: 'Update success'})
+})
+
 module.exports = {
     createNote,
     getNotes,
-    getNoteById
+    getNoteById,
+    deleteNote,
+    updateNote
 }
