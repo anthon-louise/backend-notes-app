@@ -25,14 +25,19 @@ const getFolder = asyncHandler(async (req, res) => {
 })
 
 
-// const getFolderById = asyncHandler(async (req, res) => {
-//     const value = await validationSchema.idSchema.validateAsync(req.params)
-//     const folderId = value.id
+const getFolderById = asyncHandler(async (req, res) => {
+    const value = await validationSchema.idSchema.validateAsync(req.params)
+    const folderId = value.id
 
-//     const {userId} = req.user
+    const {userId} = req.user
 
-//     const [rows]
-// })
+    const [rows] = await pool.query(`
+        SELECT notes.title, notes.content, folders.name FROM notes JOIN folders
+        ON notes.folder_id = folders.id WHERE notes.user_id=? AND folders.id=?
+        `, [userId, folderId])
+
+    res.json(rows)
+})
 
 const deleteFolder = asyncHandler(async (req, res) => {
     const value = await validationSchema.idSchema.validateAsync(req.params)
@@ -84,6 +89,7 @@ module.exports = {
     createFolder,
     getFolder,
     deleteFolder,
-    updateFolder
+    updateFolder,
+    getFolderById
 }
 

@@ -50,7 +50,7 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     const token = jwt.sign(
-        {userId: rows[0].id},
+        {userId: rows[0].id, role: rows[0].role},
         process.env.SECRET,
         {expiresIn: '1h'}
     )
