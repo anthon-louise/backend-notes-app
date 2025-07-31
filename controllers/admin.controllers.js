@@ -72,7 +72,7 @@ const logoutAdmin = asyncHandler(async (req, res) => {
 
 const getUsers = asyncHandler(async (req, res) => {
     const [rows] = await pool.query(`
-        SELECT username FROM users
+        SELECT username, id FROM users
         `)
     res.json(rows)
 })
@@ -84,13 +84,54 @@ const getNotes = asyncHandler(async (req, res) => {
             folders.name,
             notes.title,
             notes.content,
-            notes.created_at
+            notes.created_at,
+            notes.id
         FROM users
-        LEFT JOIN folders ON users.id = folders.user_id
+        JOIN folders ON users.id = folders.user_id
         LEFT JOIN notes ON folders.id = notes.folder_id
         `)
 
     res.json(rows)
+})
+
+const deleteUser = asyncHandler(async (req, res) => {
+    const value = await validationSchema.idSchema.validateAsync(req.params)
+    const userId = value.id
+
+    const [rows] = await pool.query(`
+        SELECT * FROM users WHERE id=?
+        `, [userId])
+    if (rows.length === 0) {
+        const err = new Error('No user exists')
+        err.status = 404
+        throw err
+    }
+
+    await pool.query(`
+        DELETE FROM users WHERE id=?
+        `, userId)
+
+    res.json({message: 'Successfully deleted'})
+})
+
+const deleteNotes = asyncHandler(async (req, res) => {
+    const value = await validationSchema.idSchema.validateAsync(req.params)
+    const noteId = value.id
+
+    const [rows] = await pool.query(`
+        SELECT * FROM notes WHERE id=?
+        `, [noteId])
+    if (rows.length === 0) {
+        const err = new Error('Notes did not exist')
+        err.status = 404
+        throw err
+    }
+
+    await pool.query(`
+        DELETE FROM notes WHERE id=?
+        `, [noteId])
+
+    res.json({message: 'Note deleted'})
 })
 
 module.exports = {
@@ -98,5 +139,7 @@ module.exports = {
     loginAdmin,
     logoutAdmin,
     getUsers,
-    getNotes
+    getNotes,
+    deleteUser,
+    deleteNotes
 }
