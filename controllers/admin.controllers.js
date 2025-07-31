@@ -70,8 +70,33 @@ const logoutAdmin = asyncHandler(async (req, res) => {
     res.json({message: 'Logout success'})
 })
 
+const getUsers = asyncHandler(async (req, res) => {
+    const [rows] = await pool.query(`
+        SELECT username FROM users
+        `)
+    res.json(rows)
+})
+
+const getNotes = asyncHandler(async (req, res) => {
+    const [rows] = await pool.query(`
+        SELECT
+            users.username,
+            folders.name,
+            notes.title,
+            notes.content,
+            notes.created_at
+        FROM users
+        LEFT JOIN folders ON users.id = folders.user_id
+        LEFT JOIN notes ON folders.id = notes.folder_id
+        `)
+
+    res.json(rows)
+})
+
 module.exports = {
     registerAdmin,
     loginAdmin,
-    logoutAdmin
+    logoutAdmin,
+    getUsers,
+    getNotes
 }
